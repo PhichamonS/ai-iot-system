@@ -33,7 +33,7 @@ try:
     print("Starting Simulation. Press Ctrl+C to stop.")
     for index, row in df.iterrows():
         # Let's simulate for the first 5 clients to keep it readable
-        for client_id in ["MT_001", "MT_002", "MT_003", "MT_004", "MT_005"]:
+        for client_id in ['MT_124', 'MT_131', 'MT_132', 'MT_156', 'MT_158']:
             payload = {
                 "meter_id": client_id,
                 "timestamp": row['timestamp'],

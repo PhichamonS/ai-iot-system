@@ -7,38 +7,29 @@ from collections import deque
 import os
 
 # --- CONFIGURATION ---
-load_dotenv()  # Loads variables from .env file
+dotenv_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+load_dotenv(dotenv_path=dotenv_path)
 
 DB_CONFIG = (
     f"dbname={os.getenv('DB_NAME')} "
     f"user={os.getenv('DB_USER')} "
     f"password={os.getenv('DB_PASSWORD')} "
     f"host={os.getenv('DB_HOST', 'localhost')} "
-    f"port={os.getenv('DB_PORT', '5432')}"
+    f"port={os.getenv('DB_PORT', '5433')}"
 )
-BATCH_SIZE = 50
-buffer = []
+
 
 # ---- DATABASE SETUP (Standard Postgres/Timescale) ----
 conn = psycopg2.connect(DB_CONFIG)
 cursor = conn.cursor()
 
-# Create table if not exists (TimescaleDB style)
-cursor.execute("""
-    CREATE TABLE IF NOT EXISTS energy_data (
-        time        TIMESTAMP       NOT NULL,
-        meter_id    VARCHAR(255)    NOT NULL,
-        consumption_watts DOUBLE PRECISION,
-        PRIMARY KEY (time, meter_id)
-    );
-""")
-
-conn.commit()
 
 # --- DUPLICATE DETECTION CACHE ---
 seen_records = set()
 seen_order = deque()
 MAX_CACHE_SIZE = 100
+BATCH_SIZE = 50
+buffer = []
 
 def transform_and_validate(raw_payload):
     try:
@@ -91,7 +82,7 @@ def flush_buffer():
         return
     try:
         query = """
-            INSERT INTO energy_data (time, meter_id, consumption_watts)
+            INSERT INTO energy_data (time, meter_id, consumption_kw)
             VALUES %s
             ON CONFLICT (time, meter_id) DO NOTHING
         """
